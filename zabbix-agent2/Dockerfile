@@ -4,7 +4,7 @@ FROM $BUILD_FROM
 ARG BUILD_ARCH
 ARG BUILD_VERSION
 
-LABEL maintainer "Philipp Schmitt <philipp@schmitt.co>"
+LABEL maintainer "Alexandreas <alexxandreas@gmail.com>"
 
 ENV LANG C.UTF-8
 
