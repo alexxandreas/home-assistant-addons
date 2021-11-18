@@ -9,7 +9,7 @@ LABEL maintainer "Alexandreas <alexxandreas@gmail.com>"
 ENV LANG C.UTF-8
 
 # Install requirements for add-on
-RUN apk add --no-cache jq zabbix-agent2 && \
+RUN apk add --no-cache jq zabbix-agent2 docker && \
     addgroup -g 1003 docker && \
     addgroup zabbix docker
 
