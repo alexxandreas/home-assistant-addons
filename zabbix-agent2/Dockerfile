@@ -10,7 +10,7 @@ ENV LANG C.UTF-8
 
 # Install requirements for add-on
 RUN apk add --no-cache jq zabbix-agent2 docker && \
-    addgroup -g 1003 docker && \
+#    addgroup -g 1003 docker && \
     addgroup zabbix docker
 
 # Copy data for add-on
