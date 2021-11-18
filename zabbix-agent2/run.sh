@@ -11,4 +11,5 @@ sed -i 's@^#\?\s\?\(Server\(Active\)\?\)=.*@\1='"${ZABBIX_SERVER}"'@' "$ZABBIX_C
 sed -i 's/^#\?\s\?\(Hostname\)=.*$/\1='"${ZABBIX_HOSTNAME}"'/' "${ZABBIX_CONFIG_FILE}"
 
 # Run zabbix-agent2 in foreground
-exec su zabbix -s /bin/ash -c "zabbix_agent2 -f"
+# exec su zabbix -s /bin/ash -c "zabbix_agent2 -f"
+exec zabbix_agent2 -f
