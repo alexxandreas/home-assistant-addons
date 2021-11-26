@@ -24,8 +24,6 @@ RUN apk add --no-cache jq zabbix-agent2 shadow
     # addgroup zabbix 1002 && \
     # apk add docker
 
-RUN apk --no-cache add shadow && usermod -u 1000 www-data
-
 # RUN apk add --no-cache jq zabbix-agent2 docker && \
 #    addgroup -g 1003 docker && \
 #    addgroup zabbix docker
