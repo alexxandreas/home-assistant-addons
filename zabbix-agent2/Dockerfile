@@ -13,14 +13,19 @@ ENV LANG C.UTF-8
     # addgroup -g 1003 docker && \
     # addgroup zabbix docker
 
+# репозиторий для установки usermod (пакет shadow)
+RUN echo http://dl-2.alpinelinux.org/alpine/edge/community/ >> /etc/apk/repositories
+
 # Install requirements for add-on
 # RUN apk add --no-cache jq zabbix-agent2 docker
-RUN apk add --no-cache jq zabbix-agent2 && \
-    addgroup -g 1003 docker && \
-    addgroup zabbix docker
+RUN apk add --no-cache jq zabbix-agent2 shadow
+    # addgroup -g 1003 docker && \
+    # addgroup zabbix docker
     # addgroup zabbix 1002 && \
     # apk add docker
-    
+
+RUN apk --no-cache add shadow && usermod -u 1000 www-data
+
 # RUN apk add --no-cache jq zabbix-agent2 docker && \
 #    addgroup -g 1003 docker && \
 #    addgroup zabbix docker
