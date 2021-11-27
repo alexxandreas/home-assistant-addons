@@ -19,9 +19,10 @@ ENV LANG C.UTF-8
 RUN apk add --no-cache jq zabbix-agent2
 
 # репозиторий для установки usermod (пакет shadow)
-RUN echo http://dl-2.alpinelinux.org/alpine/edge/community/ >> /etc/apk/repositories
+# RUN echo http://dl-2.alpinelinux.org/alpine/edge/community/ >> /etc/apk/repositories
 
-RUN apk add --no-cache shadow
+# RUN apk add --no-cache shadow
+
     # addgroup -g 1003 docker && \
     # addgroup zabbix docker
     # addgroup zabbix 1002 && \
