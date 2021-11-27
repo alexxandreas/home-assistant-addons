@@ -14,9 +14,14 @@ DOCKER_SOCKET=/var/run/docker.sock
 DOCKER_GROUP=docker
 REGULAR_USER=zabbix
 
+# добавляем юзера zabbix в группу docker в рантайме, 
+# т.к. в момент сборки контейнера мы не знаем GID группы docker
 if [ -S ${DOCKER_SOCKET} ]; then
+    # получаем GID группы docker
     DOCKER_GID=$(stat -c '%g' ${DOCKER_SOCKET})
+    # создаем группу
     groupadd -for -g ${DOCKER_GID} ${DOCKER_GROUP}
+    # добавляем права
     usermod -aG ${DOCKER_GROUP} ${REGULAR_USER}
 fi
 
