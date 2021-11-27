@@ -14,11 +14,11 @@ DOCKER_SOCKET=/var/run/docker.sock
 DOCKER_GROUP=docker
 REGULAR_USER=zabbix
 
-# if [ -S ${DOCKER_SOCKET} ]; then
-#     DOCKER_GID=$(stat -c '%g' ${DOCKER_SOCKET})
-#     groupadd -for -g ${DOCKER_GID} ${DOCKER_GROUP}
-#     usermod -aG ${DOCKER_GROUP} ${REGULAR_USER}
-# fi
+if [ -S ${DOCKER_SOCKET} ]; then
+    DOCKER_GID=$(stat -c '%g' ${DOCKER_SOCKET})
+    groupadd -for -g ${DOCKER_GID} ${DOCKER_GROUP}
+    usermod -aG ${DOCKER_GROUP} ${REGULAR_USER}
+fi
 
 # Run zabbix-agent2 in foreground - оригинальная команда exec su zabbix -s /bin/ash -c "zabbix_agent2 -f"
 exec su zabbix -s /bin/sh -c "/usr/sbin/zabbix_agent2 -f"
