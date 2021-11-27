@@ -21,7 +21,7 @@ REGULAR_USER=zabbix
 # fi
 
 # Run zabbix-agent2 in foreground - оригинальная команда exec su zabbix -s /bin/ash -c "zabbix_agent2 -f"
-exec su zabbix -s /bin/ash -c "zabbix_agent2 -f"
+exec su zabbix -s /bin/sh -c "zabbix_agent2 -f"
 
 # exec zabbix_agent2 -f
 
