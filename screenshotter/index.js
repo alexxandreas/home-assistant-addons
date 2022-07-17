@@ -26,29 +26,29 @@ const startBrowser = async () => {
     headless: config.debug !== true
   });
 
-  console.log(`Visiting '${config.baseUrl}' to login...`);
-  let page = await browser.newPage();
-  await page.goto(config.baseUrl, {
-    timeout: config.renderingTimeout
-  });
+  // console.log(`Visiting '${config.baseUrl}' to login...`);
+  // let page = await browser.newPage();
+  // await page.goto(config.baseUrl, {
+  //   timeout: config.renderingTimeout
+  // });
 
-  const hassTokens = {
-    hassUrl: config.baseUrl,
-    access_token: config.accessToken,
-    token_type: 'Bearer'
-  };
+  // const hassTokens = {
+  //   hassUrl: config.baseUrl,
+  //   access_token: config.accessToken,
+  //   token_type: 'Bearer'
+  // };
 
-  console.log('Adding authentication entry to browser\'s local storage...');
-  await page.evaluate(
-    (hassTokens, selectedLanguage) => {
-      localStorage.setItem('hassTokens', hassTokens);
-      localStorage.setItem('selectedLanguage', selectedLanguage);
-    },
-    JSON.stringify(hassTokens),
-    JSON.stringify(config.language)
-  );
+  // console.log('Adding authentication entry to browser\'s local storage...');
+  // await page.evaluate(
+  //   (hassTokens, selectedLanguage) => {
+  //     localStorage.setItem('hassTokens', hassTokens);
+  //     localStorage.setItem('selectedLanguage', selectedLanguage);
+  //   },
+  //   JSON.stringify(hassTokens),
+  //   JSON.stringify(config.language)
+  // );
 
-  page.close();
+  // page.close();
 };
 
 
@@ -58,29 +58,32 @@ const createHttpServer = () => {
     const url = new URL(request.url, `http://${request.headers.host}`);
     // Check the page number
     const pageNumberStr = url.pathname;
+    console.log('getting:');
+    console.dir(url);
+
     // and get the battery level, if any
     // (see https://github.com/sibbl/hass-lovelace-kindle-screensaver/README.md for patch to generate it on Kindle)
-    const batteryLevel = parseInt(url.searchParams.get('batteryLevel'));
-    const isCharging = url.searchParams.get('isCharging');
-    const pageNumber =
-      pageNumberStr === '/' ? 1 : parseInt(pageNumberStr.substr(1));
-    if (
-      isFinite(pageNumber) === false ||
-      pageNumber > config.pages.length ||
-      pageNumber < 1
-    ) {
-      console.log(`Invalid request: ${request.url} for page ${pageNumber}`);
-      response.writeHead(400);
-      response.end('Invalid request');
-      return;
-    }
+    // const batteryLevel = parseInt(url.searchParams.get('batteryLevel'));
+    // const isCharging = url.searchParams.get('isCharging');
+    // const pageNumber =
+    //   pageNumberStr === '/' ? 1 : parseInt(pageNumberStr.substr(1));
+    // if (
+    //   isFinite(pageNumber) === false ||
+    //   pageNumber > config.pages.length ||
+    //   pageNumber < 1
+    // ) {
+    //   console.log(`Invalid request: ${request.url} for page ${pageNumber}`);
+    //   response.writeHead(400);
+    //   response.end('Invalid request');
+    //   return;
+    // }
     try {
       // Log when the page was accessed
-      const n = new Date();
-      console.log(`${n.toISOString()}: Image ${pageNumber} was accessed`);
+      // const n = new Date();
+      // console.log(`${n.toISOString()}: Image ${pageNumber} was accessed`);
 
-      const pageIndex = pageNumber - 1;
-      const configPage = config.pages[pageIndex];
+      // const pageIndex = pageNumber - 1;
+      // const configPage = config.pages[pageIndex];
 
       const data = await fs.readFile(configPage.outputPath);
       const stat = await fs.stat(configPage.outputPath);
@@ -92,36 +95,37 @@ const createHttpServer = () => {
         'Content-Length': Buffer.byteLength(data),
         'Last-Modified': lastModifiedTime
       });
-      response.end(data);
+      // response.end(data);
+      response.end('hello');
 
-      let pageBatteryStore = batteryStore[pageIndex];
-      if (!pageBatteryStore) {
-        pageBatteryStore = batteryStore[pageIndex] = {
-          batteryLevel: null,
-          isCharging: false
-        };
-      }
-      if (!isNaN(batteryLevel) && batteryLevel >= 0 && batteryLevel <= 100) {
-        if (batteryLevel !== pageBatteryStore.batteryLevel) {
-          pageBatteryStore.batteryLevel = batteryLevel;
-          console.log(
-            `New battery level: ${batteryLevel} for page ${pageNumber}`
-          );
-        }
+      // let pageBatteryStore = batteryStore[pageIndex];
+      // if (!pageBatteryStore) {
+      //   pageBatteryStore = batteryStore[pageIndex] = {
+      //     batteryLevel: null,
+      //     isCharging: false
+      //   };
+      // }
+      // if (!isNaN(batteryLevel) && batteryLevel >= 0 && batteryLevel <= 100) {
+      //   if (batteryLevel !== pageBatteryStore.batteryLevel) {
+      //     pageBatteryStore.batteryLevel = batteryLevel;
+      //     console.log(
+      //       `New battery level: ${batteryLevel} for page ${pageNumber}`
+      //     );
+      //   }
 
-        if (
-          (isCharging === 'Yes' || isCharging === '1') &&
-          pageBatteryStore.isCharging !== true) {
-          pageBatteryStore.isCharging = true;
-          console.log(`Battery started charging for page ${pageNumber}`);
-        } else if (
-          (isCharging === 'No' || isCharging === '0') &&
-          pageBatteryStore.isCharging !== false
-        ) {
-          console.log(`Battery stopped charging for page ${pageNumber}`);
-          pageBatteryStore.isCharging = false;
-        }
-      }
+      //   if (
+      //     (isCharging === 'Yes' || isCharging === '1') &&
+      //     pageBatteryStore.isCharging !== true) {
+      //     pageBatteryStore.isCharging = true;
+      //     console.log(`Battery started charging for page ${pageNumber}`);
+      //   } else if (
+      //     (isCharging === 'No' || isCharging === '0') &&
+      //     pageBatteryStore.isCharging !== false
+      //   ) {
+      //     console.log(`Battery stopped charging for page ${pageNumber}`);
+      //     pageBatteryStore.isCharging = false;
+      //   }
+      // }
     } catch (e) {
       console.error(e);
       response.writeHead(404);
@@ -135,37 +139,39 @@ const createHttpServer = () => {
   });
 };
 
-const main = async () => {
-  if (config.pages.length === 0) {
-    return console.error('Please check your configuration');
-  }
 
-  for (const i in config.pages) {
-    const pageConfig = config.pages[i];
-    if (pageConfig.rotation % 90 > 0) {
-      return console.error(
-        `Invalid rotation value for entry ${i + 1}: ${pageConfig.rotation}`
-      );
-    }
-  }
+const main = async () => {
+  // if (config.pages.length === 0) {
+  //   return console.error('Please check your configuration');
+  // }
+
+  // for (const i in config.pages) {
+  //   const pageConfig = config.pages[i];
+  //   if (pageConfig.rotation % 90 > 0) {
+  //     return console.error(
+  //       `Invalid rotation value for entry ${i + 1}: ${pageConfig.rotation}`
+  //     );
+  //   }
+  // }
 
   await startBrowser();
   
-  if (config.debug) {
-    console.log(
-      'Debug mode active, will only render once in non-headless model and keep page open'
-    );
-    renderAndConvertAsync(browser);
-  } else {
-    console.log('Starting first render...');
-    renderAndConvertAsync(browser);
-    console.log('Starting rendering cronjob...');
-    new CronJob({
-      cronTime: config.cronJob,
-      onTick: () => renderAndConvertAsync(browser),
-      start: true
-    });
-  }
+
+  // if (config.debug) {
+  //   console.log(
+  //     'Debug mode active, will only render once in non-headless model and keep page open'
+  //   );
+  //   renderAndConvertAsync(browser);
+  // } else {
+  // console.log('Starting first render...');
+  // renderAndConvertAsync(browser);
+  // console.log('Starting rendering cronjob...');
+  // new CronJob({
+  //   cronTime: config.cronJob,
+  //   onTick: () => renderAndConvertAsync(browser),
+  //   start: true
+  // });
+  // }
 
   createHttpServer();
 };
