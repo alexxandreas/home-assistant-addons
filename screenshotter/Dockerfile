@@ -29,6 +29,6 @@ RUN npm ci
 
 COPY *.js ./
 
-EXPOSE 5000
+EXPOSE 80
 
 ENTRYPOINT ["npm", "start"]

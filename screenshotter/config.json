@@ -1,6 +1,6 @@
 {
   "name": "screenshotter",
-  "version": "0.8",
+  "version": "0.9",
   "slug": "screenshotter",
   "description": "screenshotter",
   "arch": [
@@ -11,6 +11,6 @@
     "i386"
   ],
   "ports": {
-    "5000/tcp": 5000
+    "80/tcp": 5000
   }
 }

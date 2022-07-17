@@ -153,10 +153,15 @@ const createHttpServer = () => {
     // console.dir(url.qerry);
     const url = requesrUrl.searchParams.get('url');
     const selector = requesrUrl.searchParams.get('selector') || undefined;
-    const width = requesrUrl.searchParams.get('width') || 1000;
+    const width = parseInt(requesrUrl.searchParams.get('width')) || 1000;
     
-    // console.log(`url: ${url.searchParams.get('url')}`);
-
+    const params = {
+      url,
+      selector,
+      width
+    };
+    console.log('query:');
+    console.dir(params);
 
     // and get the battery level, if any
     // (see https://github.com/sibbl/hass-lovelace-kindle-screensaver/README.md for patch to generate it on Kindle)
@@ -185,11 +190,7 @@ const createHttpServer = () => {
       // const data = await fs.readFile(configPage.outputPath);
       // const stat = await fs.stat(configPage.outputPath);
 
-      const data = await renderUrlToImageAsync({
-        url,
-        selector,
-        width
-      });
+      const data = await renderUrlToImageAsync(params);
 
       // const lastModifiedTime = new Date(stat.mtime).toUTCString();
 
@@ -236,7 +237,7 @@ const createHttpServer = () => {
     }
   });
 
-  const port = config.port || 5000;
+  const port = 80;
   httpServer.listen(port, () => {
     console.log(`Server is running at ${port}`);
   });
@@ -244,19 +245,6 @@ const createHttpServer = () => {
 
 
 const main = async () => {
-  // if (config.pages.length === 0) {
-  //   return console.error('Please check your configuration');
-  // }
-
-  // for (const i in config.pages) {
-  //   const pageConfig = config.pages[i];
-  //   if (pageConfig.rotation % 90 > 0) {
-  //     return console.error(
-  //       `Invalid rotation value for entry ${i + 1}: ${pageConfig.rotation}`
-  //     );
-  //   }
-  // }
-
   await startBrowser();
   
 
@@ -279,108 +267,9 @@ const main = async () => {
   createHttpServer();
 };
 
-(async function run() {
-  console.log('run');
-  await main();
-})();
 
-
-
-
-///
-
-// async function renderAndConvertAsync(browser) {
-//   for (let pageIndex = 0; pageIndex < config.pages.length; pageIndex++) {
-//     const pageConfig = config.pages[pageIndex];
-//     const pageBatteryStore = batteryStore[pageIndex];
-
-//     const url = `${config.baseUrl}${pageConfig.screenShotUrl}`;
-
-//     const outputPath = pageConfig.outputPath;
-//     await fsExtra.ensureDir(path.dirname(outputPath));
-
-//     const tempPath = outputPath + '.temp';
-
-//     console.log(`Rendering ${url} to image...`);
-//     await renderUrlToImageAsync(browser, pageConfig, url, tempPath);
-
-//     console.log(`Converting rendered screenshot of ${url} to grayscale png...`);
-//     await convertImageToKindleCompatiblePngAsync(
-//       pageConfig,
-//       tempPath,
-//       outputPath
-//     );
-
-//     fs.unlink(tempPath);
-//     console.log(`Finished ${url}`);
-
-//     if (
-//       pageBatteryStore &&
-//       pageBatteryStore.batteryLevel !== null &&
-//       pageConfig.batteryWebHook
-//     ) {
-//       sendBatteryLevelToHomeAssistant(
-//         pageIndex,
-//         pageBatteryStore,
-//         pageConfig.batteryWebHook
-//       );
-//     }
-//   }
-// }
-
-// function sendBatteryLevelToHomeAssistant(
-//   pageIndex,
-//   batteryStore,
-//   batteryWebHook
-// ) {
-//   const batteryStatus = JSON.stringify(batteryStore);
-//   const options = {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json',
-//       'Content-Length': Buffer.byteLength(batteryStatus)
-//     }
-//   };
-//   const url = `${config.baseUrl}/api/webhook/${batteryWebHook}`;
-//   const httpLib = url.toLowerCase().startsWith('https') ? https : http;
-//   const req = httpLib.request(url, options, (res) => {
-//     if (res.statusCode !== 200) {
-//       console.error(
-//         `Update device ${pageIndex} at ${url} status ${res.statusCode}: ${res.statusMessage}`
-//       );
-//     }
-//   });
-//   req.on('error', (e) => {
-//     console.error(`Update ${pageIndex} at ${url} error: ${e.message}`);
-//   });
-//   req.write(batteryStatus);
-//   req.end();
-// }
-
-
-
-// function convertImageToKindleCompatiblePngAsync(
-//   pageConfig,
-//   inputPath,
-//   outputPath
-// ) {
-//   return new Promise((resolve, reject) => {
-//     gm(inputPath)
-//       .options({
-//         imageMagick: config.useImageMagick === true
-//       })
-//       .dither(pageConfig.dither)
-//       .rotate('white', pageConfig.rotation)
-//       .type(pageConfig.colorMode)
-//       .level(pageConfig.blackLevel, pageConfig.whiteLevel)
-//       .bitdepth(pageConfig.grayscaleDepth)
-//       .quality(100)
-//       .write(outputPath, (err) => {
-//         if (err) {
-//           reject(err);
-//         } else {
-//           resolve();
-//         }
-//       });
-//   });
-// }
+main();
+// (async function run() {
+//   console.log('run');
+//   await main();
+// })();
