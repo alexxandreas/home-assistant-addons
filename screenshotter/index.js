@@ -52,6 +52,79 @@ const startBrowser = async () => {
 };
 
 
+async function renderUrlToImageAsync(url) {
+  // async function renderUrlToImageAsync(browser, pageConfig, url, path) {
+  let page;
+  try {
+    page = await browser.newPage();
+    // await page.emulateMediaFeatures([
+    //   {
+    //     name: 'prefers-color-scheme',
+    //     value: 'light'
+    //   }
+    // ]);
+  
+    let size = {
+      width: 600,
+      height: 800
+      // width: Number(pageConfig.renderingScreenSize.width),
+      // height: Number(pageConfig.renderingScreenSize.height)
+    };
+  
+    // if (pageConfig.rotation % 180 > 0) {
+    //   size = {
+    //     width: size.height,
+    //     height: size.width
+    //   };
+    // }
+  
+    await page.setViewport(size);
+    // const startTime = new Date().valueOf();
+    // await page.goto('https://www.google.com/', {
+    await page.goto(url, {
+      waitUntil: ['domcontentloaded', 'load', 'networkidle0'],
+      timeout: 5000
+      // timeout: config.renderingTimeout
+    });
+  
+    // const navigateTimespan = new Date().valueOf() - startTime;
+    // await page.waitForSelector('home-assistant', {
+    //   timeout: Math.max(config.renderingTimeout - navigateTimespan, 1000)
+    // });
+  
+    // await page.addStyleTag({
+    //   content: `
+    //     body {
+    //       width: calc(${size.width}px / ${pageConfig.scaling});
+    //       height: calc(${size.height}px / ${pageConfig.scaling});
+    //       transform-origin: 0 0;
+    //       transform: scale(${pageConfig.scaling});
+    //       overflow: hidden;
+    //     }`
+    // });
+  
+    // if (pageConfig.renderingDelay > 0) {
+    //   await page.waitForTimeout(pageConfig.renderingDelay);
+    // }
+    return page.screenshot({
+      // path: 'output/cover.png',
+      // path,
+      type: 'jpeg',
+      clip: {
+        x: 0,
+        y: 0,
+        ...size
+      }
+    });
+  } catch (e) {
+    console.error('Failed to render', e);
+  } finally {
+    // if (config.debug === false) {
+    await page.close();
+    // }
+  }
+}
+
 const createHttpServer = () => {
   const httpServer = http.createServer(async (request, response) => {
     // Parse the request
@@ -91,7 +164,7 @@ const createHttpServer = () => {
       // const data = await fs.readFile(configPage.outputPath);
       // const stat = await fs.stat(configPage.outputPath);
 
-      const data = renderUrlToImageAsync();
+      const data = await renderUrlToImageAsync('https://www.google.com/');
 
       // const lastModifiedTime = new Date(stat.mtime).toUTCString();
 
@@ -259,78 +332,7 @@ const main = async () => {
 //   req.end();
 // }
 
-async function renderUrlToImageAsync(url) {
-// async function renderUrlToImageAsync(browser, pageConfig, url, path) {
-  let page;
-  try {
-    page = await browser.newPage();
-    // await page.emulateMediaFeatures([
-    //   {
-    //     name: 'prefers-color-scheme',
-    //     value: 'light'
-    //   }
-    // ]);
 
-    let size = {
-      width: 600,
-      height: 800
-      // width: Number(pageConfig.renderingScreenSize.width),
-      // height: Number(pageConfig.renderingScreenSize.height)
-    };
-
-    // if (pageConfig.rotation % 180 > 0) {
-    //   size = {
-    //     width: size.height,
-    //     height: size.width
-    //   };
-    // }
-
-    await page.setViewport(size);
-    // const startTime = new Date().valueOf();
-    await page.goto('https://www.google.com/', {
-    // await page.goto(url, {
-      waitUntil: ['domcontentloaded', 'load', 'networkidle0'],
-      timeout: 5000
-      // timeout: config.renderingTimeout
-    });
-
-    // const navigateTimespan = new Date().valueOf() - startTime;
-    // await page.waitForSelector('home-assistant', {
-    //   timeout: Math.max(config.renderingTimeout - navigateTimespan, 1000)
-    // });
-
-    // await page.addStyleTag({
-    //   content: `
-    //     body {
-    //       width: calc(${size.width}px / ${pageConfig.scaling});
-    //       height: calc(${size.height}px / ${pageConfig.scaling});
-    //       transform-origin: 0 0;
-    //       transform: scale(${pageConfig.scaling});
-    //       overflow: hidden;
-    //     }`
-    // });
-
-    // if (pageConfig.renderingDelay > 0) {
-    //   await page.waitForTimeout(pageConfig.renderingDelay);
-    // }
-    return page.screenshot({
-      // path: 'output/cover.png',
-      // path,
-      type: 'jpeg',
-      clip: {
-        x: 0,
-        y: 0,
-        ...size
-      }
-    });
-  } catch (e) {
-    console.error('Failed to render', e);
-  } finally {
-    // if (config.debug === false) {
-    await page.close();
-    // }
-  }
-}
 
 // function convertImageToKindleCompatiblePngAsync(
 //   pageConfig,
