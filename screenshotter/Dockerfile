@@ -31,4 +31,4 @@ COPY *.js ./
 
 EXPOSE 5000
 
-CMD ["npm", "start"]
+ENTRYPOINT ["npm", "start"]
