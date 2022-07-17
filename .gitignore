@@ -1,2 +1,4 @@
 */options*.json
 .history
+node_modules/
+.vscode/
