@@ -57,9 +57,12 @@ const createHttpServer = () => {
     // Parse the request
     const url = new URL(request.url, `http://${request.headers.host}`);
     // Check the page number
-    const pageNumberStr = url.pathname;
+    // const pageNumberStr = url.pathname;
     console.log('getting:');
     console.dir(url);
+    // console.log('query:');
+    // console.dir(url.qerry);
+    console.log(`url: ${url.searchParams.get('url')}`);
 
     // and get the battery level, if any
     // (see https://github.com/sibbl/hass-lovelace-kindle-screensaver/README.md for patch to generate it on Kindle)
@@ -85,18 +88,20 @@ const createHttpServer = () => {
       // const pageIndex = pageNumber - 1;
       // const configPage = config.pages[pageIndex];
 
-      const data = await fs.readFile(configPage.outputPath);
-      const stat = await fs.stat(configPage.outputPath);
+      // const data = await fs.readFile(configPage.outputPath);
+      // const stat = await fs.stat(configPage.outputPath);
 
-      const lastModifiedTime = new Date(stat.mtime).toUTCString();
+      const data = renderUrlToImageAsync();
+
+      // const lastModifiedTime = new Date(stat.mtime).toUTCString();
 
       response.writeHead(200, {
-        'Content-Type': 'image/png',
+        'Content-Type': 'image/jpeg',
         'Content-Length': Buffer.byteLength(data),
-        'Last-Modified': lastModifiedTime
+        // 'Last-Modified': lastModifiedTime
       });
-      // response.end(data);
-      response.end('hello');
+      response.end(data);
+      // response.end('hello');
 
       // let pageBatteryStore = batteryStore[pageIndex];
       // if (!pageBatteryStore) {
@@ -186,126 +191,132 @@ const main = async () => {
 
 ///
 
-async function renderAndConvertAsync(browser) {
-  for (let pageIndex = 0; pageIndex < config.pages.length; pageIndex++) {
-    const pageConfig = config.pages[pageIndex];
-    const pageBatteryStore = batteryStore[pageIndex];
+// async function renderAndConvertAsync(browser) {
+//   for (let pageIndex = 0; pageIndex < config.pages.length; pageIndex++) {
+//     const pageConfig = config.pages[pageIndex];
+//     const pageBatteryStore = batteryStore[pageIndex];
 
-    const url = `${config.baseUrl}${pageConfig.screenShotUrl}`;
+//     const url = `${config.baseUrl}${pageConfig.screenShotUrl}`;
 
-    const outputPath = pageConfig.outputPath;
-    await fsExtra.ensureDir(path.dirname(outputPath));
+//     const outputPath = pageConfig.outputPath;
+//     await fsExtra.ensureDir(path.dirname(outputPath));
 
-    const tempPath = outputPath + '.temp';
+//     const tempPath = outputPath + '.temp';
 
-    console.log(`Rendering ${url} to image...`);
-    await renderUrlToImageAsync(browser, pageConfig, url, tempPath);
+//     console.log(`Rendering ${url} to image...`);
+//     await renderUrlToImageAsync(browser, pageConfig, url, tempPath);
 
-    console.log(`Converting rendered screenshot of ${url} to grayscale png...`);
-    await convertImageToKindleCompatiblePngAsync(
-      pageConfig,
-      tempPath,
-      outputPath
-    );
+//     console.log(`Converting rendered screenshot of ${url} to grayscale png...`);
+//     await convertImageToKindleCompatiblePngAsync(
+//       pageConfig,
+//       tempPath,
+//       outputPath
+//     );
 
-    fs.unlink(tempPath);
-    console.log(`Finished ${url}`);
+//     fs.unlink(tempPath);
+//     console.log(`Finished ${url}`);
 
-    if (
-      pageBatteryStore &&
-      pageBatteryStore.batteryLevel !== null &&
-      pageConfig.batteryWebHook
-    ) {
-      sendBatteryLevelToHomeAssistant(
-        pageIndex,
-        pageBatteryStore,
-        pageConfig.batteryWebHook
-      );
-    }
-  }
-}
+//     if (
+//       pageBatteryStore &&
+//       pageBatteryStore.batteryLevel !== null &&
+//       pageConfig.batteryWebHook
+//     ) {
+//       sendBatteryLevelToHomeAssistant(
+//         pageIndex,
+//         pageBatteryStore,
+//         pageConfig.batteryWebHook
+//       );
+//     }
+//   }
+// }
 
-function sendBatteryLevelToHomeAssistant(
-  pageIndex,
-  batteryStore,
-  batteryWebHook
-) {
-  const batteryStatus = JSON.stringify(batteryStore);
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(batteryStatus)
-    }
-  };
-  const url = `${config.baseUrl}/api/webhook/${batteryWebHook}`;
-  const httpLib = url.toLowerCase().startsWith('https') ? https : http;
-  const req = httpLib.request(url, options, (res) => {
-    if (res.statusCode !== 200) {
-      console.error(
-        `Update device ${pageIndex} at ${url} status ${res.statusCode}: ${res.statusMessage}`
-      );
-    }
-  });
-  req.on('error', (e) => {
-    console.error(`Update ${pageIndex} at ${url} error: ${e.message}`);
-  });
-  req.write(batteryStatus);
-  req.end();
-}
+// function sendBatteryLevelToHomeAssistant(
+//   pageIndex,
+//   batteryStore,
+//   batteryWebHook
+// ) {
+//   const batteryStatus = JSON.stringify(batteryStore);
+//   const options = {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//       'Content-Length': Buffer.byteLength(batteryStatus)
+//     }
+//   };
+//   const url = `${config.baseUrl}/api/webhook/${batteryWebHook}`;
+//   const httpLib = url.toLowerCase().startsWith('https') ? https : http;
+//   const req = httpLib.request(url, options, (res) => {
+//     if (res.statusCode !== 200) {
+//       console.error(
+//         `Update device ${pageIndex} at ${url} status ${res.statusCode}: ${res.statusMessage}`
+//       );
+//     }
+//   });
+//   req.on('error', (e) => {
+//     console.error(`Update ${pageIndex} at ${url} error: ${e.message}`);
+//   });
+//   req.write(batteryStatus);
+//   req.end();
+// }
 
-async function renderUrlToImageAsync(browser, pageConfig, url, path) {
+async function renderUrlToImageAsync(url) {
+// async function renderUrlToImageAsync(browser, pageConfig, url, path) {
   let page;
   try {
     page = await browser.newPage();
-    await page.emulateMediaFeatures([
-      {
-        name: 'prefers-color-scheme',
-        value: 'light'
-      }
-    ]);
+    // await page.emulateMediaFeatures([
+    //   {
+    //     name: 'prefers-color-scheme',
+    //     value: 'light'
+    //   }
+    // ]);
 
     let size = {
-      width: Number(pageConfig.renderingScreenSize.width),
-      height: Number(pageConfig.renderingScreenSize.height)
+      width: 600,
+      height: 800
+      // width: Number(pageConfig.renderingScreenSize.width),
+      // height: Number(pageConfig.renderingScreenSize.height)
     };
 
-    if (pageConfig.rotation % 180 > 0) {
-      size = {
-        width: size.height,
-        height: size.width
-      };
-    }
+    // if (pageConfig.rotation % 180 > 0) {
+    //   size = {
+    //     width: size.height,
+    //     height: size.width
+    //   };
+    // }
 
     await page.setViewport(size);
-    const startTime = new Date().valueOf();
-    await page.goto(url, {
+    // const startTime = new Date().valueOf();
+    await page.goto('https://www.google.com/', {
+    // await page.goto(url, {
       waitUntil: ['domcontentloaded', 'load', 'networkidle0'],
-      timeout: config.renderingTimeout
+      timeout: 5000
+      // timeout: config.renderingTimeout
     });
 
-    const navigateTimespan = new Date().valueOf() - startTime;
-    await page.waitForSelector('home-assistant', {
-      timeout: Math.max(config.renderingTimeout - navigateTimespan, 1000)
-    });
+    // const navigateTimespan = new Date().valueOf() - startTime;
+    // await page.waitForSelector('home-assistant', {
+    //   timeout: Math.max(config.renderingTimeout - navigateTimespan, 1000)
+    // });
 
-    await page.addStyleTag({
-      content: `
-        body {
-          width: calc(${size.width}px / ${pageConfig.scaling});
-          height: calc(${size.height}px / ${pageConfig.scaling});
-          transform-origin: 0 0;
-          transform: scale(${pageConfig.scaling});
-          overflow: hidden;
-        }`
-    });
+    // await page.addStyleTag({
+    //   content: `
+    //     body {
+    //       width: calc(${size.width}px / ${pageConfig.scaling});
+    //       height: calc(${size.height}px / ${pageConfig.scaling});
+    //       transform-origin: 0 0;
+    //       transform: scale(${pageConfig.scaling});
+    //       overflow: hidden;
+    //     }`
+    // });
 
-    if (pageConfig.renderingDelay > 0) {
-      await page.waitForTimeout(pageConfig.renderingDelay);
-    }
-    await page.screenshot({
-      path,
-      type: 'png',
+    // if (pageConfig.renderingDelay > 0) {
+    //   await page.waitForTimeout(pageConfig.renderingDelay);
+    // }
+    return page.screenshot({
+      // path: 'output/cover.png',
+      // path,
+      type: 'jpeg',
       clip: {
         x: 0,
         y: 0,
@@ -315,34 +326,34 @@ async function renderUrlToImageAsync(browser, pageConfig, url, path) {
   } catch (e) {
     console.error('Failed to render', e);
   } finally {
-    if (config.debug === false) {
-      await page.close();
-    }
+    // if (config.debug === false) {
+    await page.close();
+    // }
   }
 }
 
-function convertImageToKindleCompatiblePngAsync(
-  pageConfig,
-  inputPath,
-  outputPath
-) {
-  return new Promise((resolve, reject) => {
-    gm(inputPath)
-      .options({
-        imageMagick: config.useImageMagick === true
-      })
-      .dither(pageConfig.dither)
-      .rotate('white', pageConfig.rotation)
-      .type(pageConfig.colorMode)
-      .level(pageConfig.blackLevel, pageConfig.whiteLevel)
-      .bitdepth(pageConfig.grayscaleDepth)
-      .quality(100)
-      .write(outputPath, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-  });
-}
+// function convertImageToKindleCompatiblePngAsync(
+//   pageConfig,
+//   inputPath,
+//   outputPath
+// ) {
+//   return new Promise((resolve, reject) => {
+//     gm(inputPath)
+//       .options({
+//         imageMagick: config.useImageMagick === true
+//       })
+//       .dither(pageConfig.dither)
+//       .rotate('white', pageConfig.rotation)
+//       .type(pageConfig.colorMode)
+//       .level(pageConfig.blackLevel, pageConfig.whiteLevel)
+//       .bitdepth(pageConfig.grayscaleDepth)
+//       .quality(100)
+//       .write(outputPath, (err) => {
+//         if (err) {
+//           reject(err);
+//         } else {
+//           resolve();
+//         }
+//       });
+//   });
+// }
