@@ -113,23 +113,23 @@ async function renderUrlToImageAsync({
       await page.waitForTimeout(renderingDelay);
     }
 
-    let target = page;
+    let data;
 
     const options = {
       type: 'jpeg',
-      fullPage: true,
     };
 
     if (selector) {
       await page.waitForSelector(selector);          // дожидаемся загрузки селектора
       const element = await page.$(selector);        // объявляем переменную с ElementHandle
-      target = element;
+      data = await element.screenshot(element, options);
     } else {
-      // только для всей страницы
-      options.fullPage = true;
+      data = await page.screenshot({
+        ...options,
+        fullPage: true,
+      });
     }
     
-    const data = await target.screenshot(options);
 
     return data;
   } catch (e) {
@@ -145,12 +145,7 @@ const createHttpServer = () => {
   const httpServer = http.createServer(async (request, response) => {
     // Parse the request
     const requesrUrl = new URL(request.url, `http://${request.headers.host}`);
-    // Check the page number
-    // const pageNumberStr = url.pathname;
-    // console.log('getting:');
-    // console.dir(url);
-    // console.log('query:');
-    // console.dir(url.qerry);
+
     const url = requesrUrl.searchParams.get('url');
     const selector = requesrUrl.searchParams.get('selector') || undefined;
     const width = parseInt(requesrUrl.searchParams.get('width')) || 1000;
@@ -164,6 +159,8 @@ const createHttpServer = () => {
       renderingTimeout,
       renderingDelay
     };
+
+    console.log('');
     console.log('query:');
     console.dir(params);
 
@@ -204,6 +201,7 @@ const createHttpServer = () => {
         // 'Last-Modified': lastModifiedTime
       });
       response.end(data);
+      console.log('Successfully rendered');
       // response.end('hello');
 
       // let pageBatteryStore = batteryStore[pageIndex];
@@ -236,8 +234,9 @@ const createHttpServer = () => {
       // }
     } catch (e) {
       console.error(e);
-      response.writeHead(404);
-      response.end('Image not found');
+      response.writeHead(500);
+      response.end(e);
+      // response.end('Image not found');
     }
   });
 
