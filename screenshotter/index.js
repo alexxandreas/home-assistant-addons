@@ -54,6 +54,7 @@ const startBrowser = async () => {
 
 async function renderUrlToImageAsync({
   url,
+  width = 800,
   selector
 }) {
   // async function renderUrlToImageAsync(browser, pageConfig, url, path) {
@@ -68,8 +69,8 @@ async function renderUrlToImageAsync({
     // ]);
   
     let size = {
-      width: 600,
-      height: 800
+      width,
+      height: 1000
       // width: Number(pageConfig.renderingScreenSize.width),
       // height: Number(pageConfig.renderingScreenSize.height)
     };
@@ -115,7 +116,6 @@ async function renderUrlToImageAsync({
     if (selector) {
       await page.waitForSelector(selector);          // дожидаемся загрузки селектора
       const element = await page.$(selector);        // объявляем переменную с ElementHandle
-      // await element.screenshot({path: 'google.png'}); // делаем скриншот элемента
       target = element;
     }
     
@@ -124,11 +124,11 @@ async function renderUrlToImageAsync({
       // path,
       type: 'jpeg',
       fullPage: true,
-      clip: {
-        x: 0,
-        y: 0,
-        ...size
-      }
+      // clip: {
+      //   x: 0,
+      //   y: 0,
+      //   ...size
+      // }
     });
 
     return data;
@@ -182,7 +182,8 @@ const createHttpServer = () => {
 
       const data = await renderUrlToImageAsync({
         url: 'https://www.google.com/',
-        selector: undefined
+        selector: undefined,
+        width: 500
       });
 
       // const lastModifiedTime = new Date(stat.mtime).toUTCString();
