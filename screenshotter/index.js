@@ -52,7 +52,10 @@ const startBrowser = async () => {
 };
 
 
-async function renderUrlToImageAsync(url) {
+async function renderUrlToImageAsync({
+  url,
+  selector
+}) {
   // async function renderUrlToImageAsync(browser, pageConfig, url, path) {
   let page;
   try {
@@ -106,16 +109,29 @@ async function renderUrlToImageAsync(url) {
     // if (pageConfig.renderingDelay > 0) {
     //   await page.waitForTimeout(pageConfig.renderingDelay);
     // }
-    return page.screenshot({
+
+    let target = page;
+
+    if (selector) {
+      await page.waitForSelector(selector);          // дожидаемся загрузки селектора
+      const element = await page.$(selector);        // объявляем переменную с ElementHandle
+      // await element.screenshot({path: 'google.png'}); // делаем скриншот элемента
+      target = element;
+    }
+    
+    const data = await target.screenshot({
       // path: 'output/cover.png',
       // path,
       type: 'jpeg',
+      fullPage: true,
       clip: {
         x: 0,
         y: 0,
         ...size
       }
     });
+
+    return data;
   } catch (e) {
     console.error('Failed to render', e);
   } finally {
@@ -131,8 +147,8 @@ const createHttpServer = () => {
     const url = new URL(request.url, `http://${request.headers.host}`);
     // Check the page number
     // const pageNumberStr = url.pathname;
-    console.log('getting:');
-    console.dir(url);
+    // console.log('getting:');
+    // console.dir(url);
     // console.log('query:');
     // console.dir(url.qerry);
     console.log(`url: ${url.searchParams.get('url')}`);
@@ -164,7 +180,10 @@ const createHttpServer = () => {
       // const data = await fs.readFile(configPage.outputPath);
       // const stat = await fs.stat(configPage.outputPath);
 
-      const data = await renderUrlToImageAsync('https://www.google.com/');
+      const data = await renderUrlToImageAsync({
+        url: 'https://www.google.com/',
+        selector: undefined
+      });
 
       // const lastModifiedTime = new Date(stat.mtime).toUTCString();
 
