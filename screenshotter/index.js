@@ -54,8 +54,10 @@ const startBrowser = async () => {
 
 async function renderUrlToImageAsync({
   url,
-  width = 800,
-  selector
+  width,
+  selector,
+  renderingTimeout,
+  renderingDelay
 }) {
   // async function renderUrlToImageAsync(browser, pageConfig, url, path) {
   let page;
@@ -87,7 +89,7 @@ async function renderUrlToImageAsync({
     // await page.goto('https://www.google.com/', {
     await page.goto(url, {
       waitUntil: ['domcontentloaded', 'load', 'networkidle0'],
-      timeout: 5000
+      timeout: renderingTimeout
       // timeout: config.renderingTimeout
     });
   
@@ -107,29 +109,27 @@ async function renderUrlToImageAsync({
     //     }`
     // });
   
-    // if (pageConfig.renderingDelay > 0) {
-    //   await page.waitForTimeout(pageConfig.renderingDelay);
-    // }
+    if (renderingDelay > 0) {
+      await page.waitForTimeout(renderingDelay);
+    }
 
     let target = page;
+
+    const options = {
+      type: 'jpeg',
+      fullPage: true,
+    };
 
     if (selector) {
       await page.waitForSelector(selector);          // дожидаемся загрузки селектора
       const element = await page.$(selector);        // объявляем переменную с ElementHandle
       target = element;
+    } else {
+      // только для всей страницы
+      options.fullPage = true;
     }
     
-    const data = await target.screenshot({
-      // path: 'output/cover.png',
-      // path,
-      type: 'jpeg',
-      fullPage: true,
-      // clip: {
-      //   x: 0,
-      //   y: 0,
-      //   ...size
-      // }
-    });
+    const data = await target.screenshot(options);
 
     return data;
   } catch (e) {
@@ -154,11 +154,15 @@ const createHttpServer = () => {
     const url = requesrUrl.searchParams.get('url');
     const selector = requesrUrl.searchParams.get('selector') || undefined;
     const width = parseInt(requesrUrl.searchParams.get('width')) || 1000;
+    const renderingTimeout = parseInt(requesrUrl.searchParams.get('renderingTimeout')) || 10000;
+    const renderingDelay = parseInt(requesrUrl.searchParams.get('renderingDelay')) || 0;
     
     const params = {
       url,
       selector,
-      width
+      width,
+      renderingTimeout,
+      renderingDelay
     };
     console.log('query:');
     console.dir(params);
@@ -269,7 +273,3 @@ const main = async () => {
 
 
 main();
-// (async function run() {
-//   console.log('run');
-//   await main();
-// })();
