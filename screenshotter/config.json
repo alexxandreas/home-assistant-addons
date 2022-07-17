@@ -10,9 +10,6 @@
     "amd64",
     "i386"
   ],
-  "startup": "system",
-  "boot": "auto",
-  "host_ipc": true,
   "ports": {
     "5000/tcp": 5000
   }
