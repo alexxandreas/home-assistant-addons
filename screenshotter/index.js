@@ -144,14 +144,19 @@ async function renderUrlToImageAsync({
 const createHttpServer = () => {
   const httpServer = http.createServer(async (request, response) => {
     // Parse the request
-    const url = new URL(request.url, `http://${request.headers.host}`);
+    const requesrUrl = new URL(request.url, `http://${request.headers.host}`);
     // Check the page number
     // const pageNumberStr = url.pathname;
     // console.log('getting:');
     // console.dir(url);
     // console.log('query:');
     // console.dir(url.qerry);
-    console.log(`url: ${url.searchParams.get('url')}`);
+    const url = requesrUrl.searchParams.get('url');
+    const selector = requesrUrl.searchParams.get('selector') || undefined;
+    const width = requesrUrl.searchParams.get('width') || 1000;
+    
+    // console.log(`url: ${url.searchParams.get('url')}`);
+
 
     // and get the battery level, if any
     // (see https://github.com/sibbl/hass-lovelace-kindle-screensaver/README.md for patch to generate it on Kindle)
@@ -181,9 +186,9 @@ const createHttpServer = () => {
       // const stat = await fs.stat(configPage.outputPath);
 
       const data = await renderUrlToImageAsync({
-        url: 'https://www.google.com/',
-        selector: undefined,
-        width: 500
+        url,
+        selector,
+        width
       });
 
       // const lastModifiedTime = new Date(stat.mtime).toUTCString();
