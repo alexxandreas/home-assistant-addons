@@ -235,7 +235,7 @@ const createHttpServer = () => {
     } catch (e) {
       console.error(String(e));
       response.writeHead(500);
-      response.end(e);
+      response.end(String(e));
       // response.end('Image not found');
     }
   });
