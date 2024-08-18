@@ -34,7 +34,7 @@ async function renderUrlToImageAsync({
 
     let size = {
       width,
-      height: 1000
+      height: 10000
     };
   
     await page.setViewport(size);
