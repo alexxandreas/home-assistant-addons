@@ -4,11 +4,21 @@ import Koa from 'koa';
 import {serializeError} from 'serialize-error';
 
 let browser;
+let browserInactivityTimer;
+
+// Время бездействия браузера перед закрытием (в миллисекундах)
+const BROWSER_INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 минут
 
 const sleep = timeout => new Promise(resolve => setTimeout(resolve, timeout));
 
 
 const startBrowser = async () => {
+  // Если браузер уже запущен, не запускаем повторно
+  if (browser && browser.connected) {
+    console.log('Browser already running');
+    return;
+  }
+
   console.log('Starting browser...');
 
   browser = await puppeteer.launch({
@@ -16,7 +26,17 @@ const startBrowser = async () => {
       '--disable-dev-shm-usage',
       '--no-sandbox',
       '--lang=en',
-      '--ignore-certificate-errors'
+      '--ignore-certificate-errors',
+      // Добавить эти параметры для снижения нагрузки:
+      '--disable-background-networking',
+      '--disable-background-timer-throttling',
+      '--disable-renderer-backgrounding',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-features=TranslateUI',
+      '--disable-ipc-flooding-protection',
+      '--disable-extensions',
+      '--disable-sync',
+      '--disable-default-apps'
     ],
     headless: true,
 
@@ -25,7 +45,38 @@ const startBrowser = async () => {
     // slowMo: 250,
   });
 
-  console.log('Browser runing');
+  console.log('Browser running');
+};
+
+// Функция для обеспечения работы браузера
+const ensureBrowserRunning = async () => {
+  if (!browser || !browser.connected) {
+    await startBrowser();
+  }
+  resetBrowserInactivityTimer();
+};
+
+// Функция для сброса таймера бездействия браузера
+const resetBrowserInactivityTimer = () => {
+  // Очищаем предыдущий таймер
+  if (browserInactivityTimer) {
+    clearTimeout(browserInactivityTimer);
+  }
+
+  // Устанавливаем новый таймер
+  browserInactivityTimer = setTimeout(async () => {
+    await stopBrowserIfInactive();
+  }, BROWSER_INACTIVITY_TIMEOUT);
+};
+
+// Функция для закрытия браузера при бездействии
+const stopBrowserIfInactive = async () => {
+  if (browser && browser.connected) {
+    console.log('Closing inactive browser...');
+    await browser.close();
+    browser = null;
+    console.log('Browser closed due to inactivity');
+  }
 };
 
 
@@ -37,6 +88,9 @@ async function renderUrlToImageAsync({
   renderingTimeout,
   renderingDelay
 }) {
+  // Убеждаемся, что браузер запущен и сбрасываем таймер бездействия
+  await ensureBrowserRunning();
+  
   let page;
   try {
     page = await browser.newPage();
@@ -68,7 +122,8 @@ async function renderUrlToImageAsync({
         timeout: 30000
       }); // дожидаемся загрузки селектора
       const element = await page.$(selector);        // объявляем переменную с ElementHandle
-      data = await element.screenshot(element, options);
+      data = await element.screenshot(options);
+      // data = await element.screenshot(element, options);
     } else {
       data = await page.screenshot({
         ...options,
@@ -77,6 +132,7 @@ async function renderUrlToImageAsync({
     }
   
     return Buffer.from(data, 'base64');
+    // return data;
   } finally {
     await page.close();
   }
@@ -129,9 +185,33 @@ const createHttpServer = () => {
 
 
 const main = async () => {
-  await startBrowser();
+  // Браузер теперь запускается только при необходимости
+  console.log('Server starting... Browser will start on first request');
   
   createHttpServer();
+
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('Shutting down gracefully...');
+    if (browserInactivityTimer) {
+      clearTimeout(browserInactivityTimer);
+    }
+    if (browser && browser.connected) {
+      await browser.close();
+    }
+    process.exit(0);
+  });
+  
+  process.on('SIGINT', async () => {
+    console.log('Shutting down gracefully...');
+    if (browserInactivityTimer) {
+      clearTimeout(browserInactivityTimer);
+    }
+    if (browser && browser.connected) {
+      await browser.close();
+    }
+    process.exit(0);
+  });
 };
 
 
