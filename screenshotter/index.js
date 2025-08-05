@@ -49,15 +49,15 @@ const startBrowser = async () => {
 };
 
 // Функция для обеспечения работы браузера
-const ensureBrowserRunning = async () => {
+const ensureBrowserRunning = async (timeout) => {
   if (!browser || !browser.connected) {
     await startBrowser();
   }
-  resetBrowserInactivityTimer();
+  resetBrowserInactivityTimer(timeout);
 };
 
 // Функция для сброса таймера бездействия браузера
-const resetBrowserInactivityTimer = () => {
+const resetBrowserInactivityTimer = (timeout) => {
   // Очищаем предыдущий таймер
   if (browserInactivityTimer) {
     clearTimeout(browserInactivityTimer);
@@ -66,7 +66,7 @@ const resetBrowserInactivityTimer = () => {
   // Устанавливаем новый таймер
   browserInactivityTimer = setTimeout(async () => {
     await stopBrowserIfInactive();
-  }, BROWSER_INACTIVITY_TIMEOUT);
+  }, BROWSER_INACTIVITY_TIMEOUT + timeout);
 };
 
 // Функция для закрытия браузера при бездействии
@@ -88,8 +88,9 @@ async function renderUrlToImageAsync({
   renderingTimeout,
   renderingDelay
 }) {
+  const fullTimeout = renderingDelay + renderingTimeout + (selector ? 30000 : 0);
   // Убеждаемся, что браузер запущен и сбрасываем таймер бездействия
-  await ensureBrowserRunning();
+  await ensureBrowserRunning(fullTimeout);
   
   let page;
   try {
